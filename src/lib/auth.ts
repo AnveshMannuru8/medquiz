@@ -6,6 +6,20 @@ import bcrypt from "bcryptjs"
 
 const prisma = new PrismaClient()
 
+declare module "next-auth" {
+    interface User {
+        role?: string
+    }
+    interface Session {
+        user: {
+            id: string
+            role?: string
+        } & DefaultSession["user"]
+    }
+}
+
+import { DefaultSession } from "next-auth"
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
     adapter: PrismaAdapter(prisma),
     session: {

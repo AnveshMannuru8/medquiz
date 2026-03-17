@@ -1,5 +1,4 @@
 import { Metadata } from "next"
-import Link from "next"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -71,7 +70,7 @@ export default function LoginPage() {
                         </CardFooter>
                     </Card>
                     <p className="px-8 text-center text-sm text-muted-foreground">
-                        Don't have an account?{" "}
+                        {"Don't have an account? "}
                         <a
                             href="/register"
                             className="underline underline-offset-4 hover:text-primary"

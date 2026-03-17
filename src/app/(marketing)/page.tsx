@@ -203,7 +203,7 @@ export default function HomePage() {
                         <div className="flex overflow-x-auto pb-8 gap-6 snap-x">
                             <Card className="min-w-[300px] md:min-w-[400px] snap-center">
                                 <CardContent className="pt-6">
-                                    <p className="italic mb-4">"The AI explanations are a game-changer. It's like having a tutor explain exactly why I got a question wrong."</p>
+                                    <p className="italic mb-4">&ldquo;The AI explanations are a game-changer. It&rsquo;s like having a tutor explain exactly why I got a question wrong.&rdquo;</p>
                                     <div className="flex items-center gap-4">
                                         <div className="h-10 w-10 rounded-full bg-gray-200"></div>
                                         <div>
@@ -215,7 +215,7 @@ export default function HomePage() {
                             </Card>
                             <Card className="min-w-[300px] md:min-w-[400px] snap-center">
                                 <CardContent className="pt-6">
-                                    <p className="italic mb-4">"I loved the combo plan. Being able to seamlessly transition from Step 1 to Step 2 CK prep saved me so much money."</p>
+                                    <p className="italic mb-4">&ldquo;I loved the combo plan. Being able to seamlessly transition from Step 1 to Step 2 CK prep saved me so much money.&rdquo;</p>
                                     <div className="flex items-center gap-4">
                                         <div className="h-10 w-10 rounded-full bg-gray-200"></div>
                                         <div>
@@ -227,7 +227,7 @@ export default function HomePage() {
                             </Card>
                             <Card className="min-w-[300px] md:min-w-[400px] snap-center">
                                 <CardContent className="pt-6">
-                                    <p className="italic mb-4">"The smart flashcards integrated with the Qbank made reviewing my incorrects incredibly efficient."</p>
+                                    <p className="italic mb-4">&ldquo;The smart flashcards integrated with the Qbank made reviewing my incorrects incredibly efficient.&rdquo;</p>
                                     <div className="flex items-center gap-4">
                                         <div className="h-10 w-10 rounded-full bg-gray-200"></div>
                                         <div>

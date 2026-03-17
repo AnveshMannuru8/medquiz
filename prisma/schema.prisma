@@ -23,7 +23,11 @@ model User {
   affiliate       Affiliate?
 }
 
-enum Role { STUDENT  ADMIN  AFFILIATE }
+enum Role {
+  STUDENT
+  ADMIN
+  AFFILIATE
+}
 
 model Question {
   id           String    @id @default(cuid())
@@ -41,8 +45,17 @@ model Question {
   answers      QuizAnswer[]
 }
 
-enum Step { STEP1  STEP2CK  STEP3 }
-enum Difficulty { EASY  MEDIUM  HARD }
+enum Step {
+  STEP1
+  STEP2CK
+  STEP3
+}
+
+enum Difficulty {
+  EASY
+  MEDIUM
+  HARD
+}
 
 model QuizSession {
   id            String       @id @default(cuid())
@@ -57,8 +70,16 @@ model QuizSession {
   answers       QuizAnswer[]
 }
 
-enum QuizMode { TUTOR  EXAM }
-enum SessionStatus { ACTIVE  COMPLETED  PAUSED }
+enum QuizMode {
+  TUTOR
+  EXAM
+}
+
+enum SessionStatus {
+  ACTIVE
+  COMPLETED
+  PAUSED
+}
 
 model QuizAnswer {
   id            String       @id @default(cuid())
@@ -85,8 +106,19 @@ model Subscription {
   user                 User     @relation(fields:[userId],references:[id])
 }
 
-enum Plan { MONTHLY  SIX_MONTH  ANNUAL  COMBO }
-enum SubStatus { ACTIVE  TRIALING  PAST_DUE  CANCELED }
+enum Plan {
+  MONTHLY
+  SIX_MONTH
+  ANNUAL
+  COMBO
+}
+
+enum SubStatus {
+  ACTIVE
+  TRIALING
+  PAST_DUE
+  CANCELED
+}
 
 model Flashcard {
   id             String   @id @default(cuid())
