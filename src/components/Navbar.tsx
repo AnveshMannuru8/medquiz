@@ -3,9 +3,8 @@
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
-import { GraduationCap, LogOut, User, Menu, X } from "lucide-react";
+import { GraduationCap, LogOut, Menu, X } from "lucide-react";
 import { useState } from "react";
-import { cn } from "@/lib/utils";
 
 export function Navbar() {
   const { data: session, status } = useSession();
