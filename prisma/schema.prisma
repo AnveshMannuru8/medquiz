@@ -1,0 +1,121 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String        @id @default(cuid())
+  name            String?
+  email           String        @unique
+  passwordHash    String?
+  role            Role          @default(STUDENT)
+  emailVerified   DateTime?
+  image           String?
+  createdAt       DateTime      @default(now())
+  subscription    Subscription?
+  quizSessions    QuizSession[]
+  flashcards      Flashcard[]
+  notes           Note[]
+  affiliate       Affiliate?
+}
+
+enum Role { STUDENT  ADMIN  AFFILIATE }
+
+model Question {
+  id           String    @id @default(cuid())
+  step         Step               // STEP1 | STEP2CK | STEP3
+  subject      String             // e.g. Cardiology
+  system       String             // e.g. Cardiovascular
+  difficulty   Difficulty         // EASY | MEDIUM | HARD
+  questionText String   @db.Text
+  choices      Json               // [{id, text, isCorrect}]
+  explanation  String   @db.Text
+  imageUrl     String?
+  tags         String[]
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  answers      QuizAnswer[]
+}
+
+enum Step { STEP1  STEP2CK  STEP3 }
+enum Difficulty { EASY  MEDIUM  HARD }
+
+model QuizSession {
+  id            String       @id @default(cuid())
+  userId        String
+  mode          QuizMode     // TUTOR | EXAM
+  status        SessionStatus // ACTIVE | COMPLETED | PAUSED
+  timeLimitSecs Int?
+  score         Float?
+  createdAt     DateTime     @default(now())
+  completedAt   DateTime?
+  user          User         @relation(fields:[userId], references:[id])
+  answers       QuizAnswer[]
+}
+
+enum QuizMode { TUTOR  EXAM }
+enum SessionStatus { ACTIVE  COMPLETED  PAUSED }
+
+model QuizAnswer {
+  id            String       @id @default(cuid())
+  sessionId     String
+  questionId    String
+  userId        String
+  choiceId      String
+  isCorrect     Boolean
+  timeSpentSecs Int?
+  createdAt     DateTime     @default(now())
+  session       QuizSession  @relation(fields:[sessionId], references:[id])
+  question      Question     @relation(fields:[questionId], references:[id])
+}
+
+model Subscription {
+  id                   String   @id @default(cuid())
+  userId               String   @unique
+  stripeCustomerId     String   @unique
+  stripeSubscriptionId String?  @unique
+  plan                 Plan     // MONTHLY | SIX_MONTH | ANNUAL | COMBO
+  status               SubStatus // ACTIVE | TRIALING | PAST_DUE | CANCELED
+  currentPeriodEnd     DateTime
+  cancelAtPeriodEnd    Boolean  @default(false)
+  user                 User     @relation(fields:[userId],references:[id])
+}
+
+enum Plan { MONTHLY  SIX_MONTH  ANNUAL  COMBO }
+enum SubStatus { ACTIVE  TRIALING  PAST_DUE  CANCELED }
+
+model Flashcard {
+  id             String   @id @default(cuid())
+  userId         String
+  front          String   @db.Text
+  back           String   @db.Text
+  sourceType     String?  // 'question' | 'note' | 'manual' | 'ai'
+  // SM-2 spaced repetition fields
+  nextReviewAt   DateTime @default(now())
+  interval       Int      @default(1)   // days
+  easeFactor     Float    @default(2.5)
+  repetitions    Int      @default(0)
+  user           User     @relation(fields:[userId], references:[id])
+}
+
+model Note {
+  id             String   @id @default(cuid())
+  userId         String
+  content        String   @db.Text
+  createdAt      DateTime @default(now())
+  user           User     @relation(fields:[userId], references:[id])
+}
+
+model Affiliate {
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  referralCode String   @unique
+  clicks       Int      @default(0)
+  conversions  Int      @default(0)
+  earnings     Float    @default(0.0)
+  user         User     @relation(fields:[userId],references:[id])
+}
