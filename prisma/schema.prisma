@@ -7,15 +7,44 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Account {
+  id                 String  @id @default(cuid())
+  userId             String
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String?
+  access_token       String?
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String?
+  session_state      String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
 model User {
   id              String        @id @default(cuid())
   name            String?
   email           String        @unique
   passwordHash    String?
-  role            Role          @default(STUDENT)
+  role            String        @default("STUDENT")
   emailVerified   DateTime?
   image           String?
   createdAt       DateTime      @default(now())
+  accounts        Account[]
+  sessions        Session[]
   subscription    Subscription?
   quizSessions    QuizSession[]
   flashcards      Flashcard[]
@@ -23,62 +52,41 @@ model User {
   affiliate       Affiliate?
 }
 
-enum Role {
-  STUDENT
-  ADMIN
-  AFFILIATE
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
 }
 
 model Question {
   id           String    @id @default(cuid())
-  step         Step               // STEP1 | STEP2CK | STEP3
+  step         String             // STEP1 | STEP2CK | STEP3
   subject      String             // e.g. Cardiology
   system       String             // e.g. Cardiovascular
-  difficulty   Difficulty         // EASY | MEDIUM | HARD
-  questionText String   @db.Text
-  choices      Json               // [{id, text, isCorrect}]
-  explanation  String   @db.Text
+  difficulty   String             // EASY | MEDIUM | HARD
+  questionText String
+  choices      String             // JSON string: [{id, text, isCorrect}]
+  explanation  String
   imageUrl     String?
-  tags         String[]
+  tags         String             // JSON string array
   isActive     Boolean  @default(true)
   createdAt    DateTime @default(now())
   answers      QuizAnswer[]
 }
 
-enum Step {
-  STEP1
-  STEP2CK
-  STEP3
-}
-
-enum Difficulty {
-  EASY
-  MEDIUM
-  HARD
-}
-
 model QuizSession {
   id            String       @id @default(cuid())
   userId        String
-  mode          QuizMode     // TUTOR | EXAM
-  status        SessionStatus // ACTIVE | COMPLETED | PAUSED
+  mode          String       // TUTOR | EXAM
+  status        String       // ACTIVE | COMPLETED | PAUSED
   timeLimitSecs Int?
   score         Float?
   createdAt     DateTime     @default(now())
   completedAt   DateTime?
   user          User         @relation(fields:[userId], references:[id])
   answers       QuizAnswer[]
-}
-
-enum QuizMode {
-  TUTOR
-  EXAM
-}
-
-enum SessionStatus {
-  ACTIVE
-  COMPLETED
-  PAUSED
 }
 
 model QuizAnswer {
@@ -99,32 +107,18 @@ model Subscription {
   userId               String   @unique
   stripeCustomerId     String   @unique
   stripeSubscriptionId String?  @unique
-  plan                 Plan     // MONTHLY | SIX_MONTH | ANNUAL | COMBO
-  status               SubStatus // ACTIVE | TRIALING | PAST_DUE | CANCELED
+  plan                 String   // MONTHLY | SIX_MONTH | ANNUAL | COMBO
+  status               String   // ACTIVE | TRIALING | PAST_DUE | CANCELED
   currentPeriodEnd     DateTime
   cancelAtPeriodEnd    Boolean  @default(false)
   user                 User     @relation(fields:[userId],references:[id])
 }
 
-enum Plan {
-  MONTHLY
-  SIX_MONTH
-  ANNUAL
-  COMBO
-}
-
-enum SubStatus {
-  ACTIVE
-  TRIALING
-  PAST_DUE
-  CANCELED
-}
-
 model Flashcard {
   id             String   @id @default(cuid())
   userId         String
-  front          String   @db.Text
-  back           String   @db.Text
+  front          String
+  back           String
   sourceType     String?  // 'question' | 'note' | 'manual' | 'ai'
   // SM-2 spaced repetition fields
   nextReviewAt   DateTime @default(now())
@@ -137,7 +131,7 @@ model Flashcard {
 model Note {
   id             String   @id @default(cuid())
   userId         String
-  content        String   @db.Text
+  content        String
   createdAt      DateTime @default(now())
   user           User     @relation(fields:[userId], references:[id])
 }
