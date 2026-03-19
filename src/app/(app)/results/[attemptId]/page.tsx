@@ -1,4 +1,5 @@
 import { getAttempt } from "@/features/results/server/attempts.service";
+import { Card } from "@/components/ui/card";
 
 export default async function ResultDetailPage({
   params,
@@ -9,16 +10,24 @@ export default async function ResultDetailPage({
 
   return (
     <div className="max-w-2xl">
-      <h1 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">Attempt results</h1>
+      <h1 className="text-2xl font-semibold tracking-tight">Attempt results</h1>
       <dl className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
-          <dt className="text-xs font-medium text-slate-500 dark:text-slate-400">Attempt</dt>
-          <dd className="mt-1 text-sm font-semibold text-slate-900 dark:text-white">{attempt.id}</dd>
-        </div>
-        <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
-          <dt className="text-xs font-medium text-slate-500 dark:text-slate-400">Score</dt>
-          <dd className="mt-1 text-sm font-semibold text-slate-900 dark:text-white">{attempt.score ?? "—"}</dd>
-        </div>
+        <Card className="border border-border bg-card p-4">
+          <dt className="text-xs font-medium text-muted-foreground">Attempt</dt>
+          <dd className="mt-1 text-sm font-semibold">{attempt.id}</dd>
+        </Card>
+        <Card className="border border-border bg-card p-4">
+          <dt className="text-xs font-medium text-muted-foreground">Score</dt>
+          <dd className="mt-1 text-sm font-semibold">{attempt.score ?? "—"}</dd>
+        </Card>
+        <Card className="border border-border bg-card p-4">
+          <dt className="text-xs font-medium text-muted-foreground">Started</dt>
+          <dd className="mt-1 text-sm font-semibold">{new Date(attempt.startedAt).toLocaleString()}</dd>
+        </Card>
+        <Card className="border border-border bg-card p-4">
+          <dt className="text-xs font-medium text-muted-foreground">Completed</dt>
+          <dd className="mt-1 text-sm font-semibold">{attempt.completedAt ? new Date(attempt.completedAt).toLocaleString() : "—"}</dd>
+        </Card>
       </dl>
     </div>
   );

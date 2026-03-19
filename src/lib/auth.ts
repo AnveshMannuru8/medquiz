@@ -1,8 +1,10 @@
-import NextAuth from "next-auth"
+import { PrismaAdapter } from "@auth/prisma-adapter"
+import bcrypt from "bcryptjs"
+import NextAuth, { type DefaultSession } from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
 import GoogleProvider from "next-auth/providers/google"
-import bcrypt from "bcryptjs"
-import { adminDb } from "./firebase-admin"
+
+import { prisma } from "@/lib/prisma"
 
 declare module "next-auth" {
     interface User {
@@ -16,9 +18,8 @@ declare module "next-auth" {
     }
 }
 
-import { DefaultSession } from "next-auth"
-
 export const { handlers, auth, signIn, signOut } = NextAuth({
+    adapter: PrismaAdapter(prisma),
     session: {
         strategy: "jwt",
         maxAge: 30 * 24 * 60 * 60, // 30 days
@@ -28,10 +29,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         signIn: "/login",
     },
     providers: [
-        GoogleProvider({
-            clientId: process.env.GOOGLE_CLIENT_ID || "mock-client-id",
-            clientSecret: process.env.GOOGLE_CLIENT_SECRET || "mock-client-secret",
-        }),
+        ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
+            ? [
+                  GoogleProvider({
+                      clientId: process.env.GOOGLE_CLIENT_ID,
+                      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+                  }),
+              ]
+            : []),
         CredentialsProvider({
             name: "Credentials",
             credentials: {
@@ -39,33 +44,22 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                 password: { label: "Password", type: "password" }
             },
             async authorize(credentials) {
-                if (!credentials?.email || !credentials?.password) {
+                const email = typeof credentials?.email === "string" ? credentials.email : ""
+                const password = typeof credentials?.password === "string" ? credentials.password : ""
+
+                if (!email || !password) {
                     return null
                 }
 
-                const usersRef = adminDb.collection("users");
-                const snapshot = await usersRef.where("email", "==", credentials.email).get();
+                const user = await prisma.user.findUnique({
+                    where: { email: email.trim().toLowerCase() },
+                    select: { id: true, email: true, name: true, role: true, passwordHash: true },
+                })
 
-                if (snapshot.empty) {
-                    return null
-                }
+                if (!user?.passwordHash) return null
 
-                const userDoc = snapshot.docs[0];
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const user = { id: userDoc.id, ...userDoc.data() } as any;
-
-                if (!user || !user.passwordHash) {
-                    return null
-                }
-
-                const isPasswordValid = await bcrypt.compare(
-                    credentials.password as string,
-                    user.passwordHash
-                )
-
-                if (!isPasswordValid) {
-                    return null
-                }
+                const isPasswordValid = await bcrypt.compare(password, user.passwordHash)
+                if (!isPasswordValid) return null
 
                 return {
                     id: user.id,
@@ -78,16 +72,18 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     ],
     callbacks: {
         async jwt({ token, user }) {
+            const t = token as typeof token & { id?: string; role?: string }
             if (user) {
-                token.role = user.role
-                token.id = user.id
+                t.role = user.role
+                t.id = user.id
             }
-            return token
+            return t
         },
         async session({ session, token }) {
             if (session.user) {
-                session.user.role = token.role as string
-                session.user.id = token.id as string
+                const t = token as typeof token & { id?: string; role?: string }
+                session.user.role = t.role
+                session.user.id = t.id || session.user.id
             }
             return session
         }

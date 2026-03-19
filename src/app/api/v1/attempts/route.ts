@@ -1,9 +1,14 @@
 import { z } from "zod";
 
+import { auth } from "@/lib/auth";
 import { createAttempt, listAttempts } from "@/features/results/server/attempts.service";
 import { jsonError, jsonOk } from "@/server/http/response";
 
 export async function GET() {
+  const session = await auth();
+  if (!session) {
+    return jsonError("Unauthorized", 401, "UNAUTHORIZED");
+  }
   const attempts = await listAttempts();
   return jsonOk(attempts);
 }
@@ -13,6 +18,10 @@ const createAttemptSchema = z.object({
 });
 
 export async function POST(req: Request) {
+  const session = await auth();
+  if (!session) {
+    return jsonError("Unauthorized", 401, "UNAUTHORIZED");
+  }
   const body = (await req.json().catch(() => null)) as unknown;
   const parsed = createAttemptSchema.safeParse(body);
   if (!parsed.success) {

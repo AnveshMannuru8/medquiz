@@ -1,27 +1,33 @@
 import { NextResponse } from "next/server"
-import type { NextRequest } from "next/server"
 
-export async function middleware(request: NextRequest) {
-    const sessionToken = request.cookies.get("authjs.session-token")?.value || request.cookies.get("__Secure-authjs.session-token")?.value;
-    const { pathname } = request.nextUrl
+import { auth } from "@/lib/auth"
 
-    // Protect dashboard routes
-    if (pathname.startsWith("/dashboard")) {
-        if (!sessionToken) {
-            return NextResponse.redirect(new URL("/login", request.url))
-        }
+export default auth((req) => {
+    const { pathname } = req.nextUrl
+    const isAuthed = Boolean(req.auth)
+
+    if (!isAuthed) {
+        return NextResponse.redirect(new URL("/login", req.url))
     }
 
-    // Protect admin routes
     if (pathname.startsWith("/admin")) {
-        if (!sessionToken) {
-            return NextResponse.redirect(new URL("/login", request.url))
+        const role = req.auth?.user?.role
+        if (role !== "ADMIN") {
+            return NextResponse.redirect(new URL("/dashboard", req.url))
         }
     }
 
     return NextResponse.next()
-}
+})
 
 export const config = {
-    matcher: ["/dashboard/:path*", "/admin/:path*"],
+    matcher: [
+        "/dashboard/:path*",
+        "/admin/:path*",
+        "/quiz/:path*",
+        "/questions/:path*",
+        "/results/:path*",
+        "/settings/:path*",
+        "/qbank/:path*",
+    ],
 }

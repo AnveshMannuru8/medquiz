@@ -4,6 +4,14 @@ import { useState } from "react"
 import { useParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@/components/ui/dialog"
 import { ChevronRight, ChevronLeft, Flag, MessageSquare, BookOpen } from "lucide-react"
 
 // Mock data for demonstration
@@ -33,6 +41,8 @@ export default function QuizSessionPage() {
     const [selectedChoice, setSelectedChoice] = useState<string | null>(null)
     const [isAnswered, setIsAnswered] = useState(false)
     const [isFlagged, setIsFlagged] = useState(false)
+    const [tutorText, setTutorText] = useState<string | null>(null)
+    const [tutorLoading, setTutorLoading] = useState(false)
 
     // In a real app, fetch question data based on params.id
     const question = mockQuestion
@@ -51,6 +61,31 @@ export default function QuizSessionPage() {
         // Move to next question
         setSelectedChoice(null)
         setIsAnswered(false)
+    }
+
+    const askTutor = async () => {
+        setTutorLoading(true)
+        setTutorText(null)
+        try {
+            const res = await fetch("/api/v1/ai/tutor", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    questionId: question.id,
+                    prompt: `Explain why the correct answer is correct and why the other options are wrong.`
+                }),
+            })
+            const payload = await res.json().catch(() => null)
+            if (!res.ok) {
+                setTutorText(payload?.message || payload?.error || "Tutor request failed.")
+                return
+            }
+            setTutorText(payload?.message || "Tutor ready.")
+        } catch {
+            setTutorText("Tutor request failed.")
+        } finally {
+            setTutorLoading(false)
+        }
     }
 
     return (
@@ -158,10 +193,30 @@ export default function QuizSessionPage() {
                                     )}
 
                                     <div className="flex space-x-4 pt-4 border-t border-slate-800">
-                                        <Button variant="outline" className="bg-slate-900 border-slate-700 hover:bg-slate-800">
-                                            <MessageSquare className="w-4 h-4 mr-2" />
-                                            Ask AI Tutor
-                                        </Button>
+                                        <Dialog>
+                                            <DialogTrigger asChild>
+                                                <Button variant="outline" className="bg-slate-900 border-slate-700 hover:bg-slate-800">
+                                                    <MessageSquare className="w-4 h-4 mr-2" />
+                                                    Ask AI Tutor
+                                                </Button>
+                                            </DialogTrigger>
+                                            <DialogContent className="sm:max-w-xl">
+                                                <DialogHeader>
+                                                    <DialogTitle>AI Tutor</DialogTitle>
+                                                    <DialogDescription>
+                                                        This uses `/api/v1/ai/tutor`. Configure `OPENAI_API_KEY` to enable real responses.
+                                                    </DialogDescription>
+                                                </DialogHeader>
+                                                <div className="space-y-3">
+                                                    <Button type="button" onClick={askTutor} disabled={tutorLoading}>
+                                                        {tutorLoading ? "Asking..." : "Ask"}
+                                                    </Button>
+                                                    <div className="rounded-md border border-border bg-muted px-3 py-2 text-sm text-muted-foreground">
+                                                        {tutorText ?? "No response yet."}
+                                                    </div>
+                                                </div>
+                                            </DialogContent>
+                                        </Dialog>
                                     </div>
                                 </div>
                             </div>

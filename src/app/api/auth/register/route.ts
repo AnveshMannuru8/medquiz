@@ -1,39 +1,44 @@
 import { NextResponse } from "next/server"
 import bcrypt from "bcryptjs"
-import { adminDb } from "@/lib/firebase-admin"
+import { z } from "zod"
+
+import { prisma } from "@/lib/prisma"
+
+const registerSchema = z.object({
+    name: z.string().min(1).max(80),
+    email: z.string().email().max(255),
+    password: z.string().min(8).max(200),
+})
 
 export async function POST(req: Request) {
     try {
-        const { name, email, password } = await req.json()
-
-        if (!name || !email || !password) {
-            return new NextResponse("Missing fields", { status: 400 })
+        const body = (await req.json().catch(() => null)) as unknown
+        const parsed = registerSchema.safeParse(body)
+        if (!parsed.success) {
+            return NextResponse.json({ error: "Invalid request body" }, { status: 400 })
         }
 
-        const usersRef = adminDb.collection("users");
-        const snapshot = await usersRef.where("email", "==", email).get();
+        const { name, email, password } = parsed.data
+        const normalizedEmail = email.trim().toLowerCase()
 
-        if (!snapshot.empty) {
-            return new NextResponse("Email already exists", { status: 400 })
+        const existing = await prisma.user.findUnique({ where: { email: normalizedEmail }, select: { id: true } })
+        if (existing) {
+            return NextResponse.json({ error: "Email already exists" }, { status: 400 })
         }
 
-        const hashedPassword = await bcrypt.hash(password, 10)
+        const passwordHash = await bcrypt.hash(password, 10)
+        const user = await prisma.user.create({
+            data: {
+                name,
+                email: normalizedEmail,
+                passwordHash,
+                role: "STUDENT",
+            },
+            select: { id: true, email: true, name: true },
+        })
 
-        const newUserRef = usersRef.doc();
-        const userData = {
-            name,
-            email,
-            passwordHash: hashedPassword,
-            role: "USER",
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-        };
-
-        await newUserRef.set(userData);
-
-        return NextResponse.json({ id: newUserRef.id, email, name })
-    } catch (error) {
-        console.error("REGISTRATION_ERROR", error)
-        return new NextResponse("Internal Error", { status: 500 })
+        return NextResponse.json(user, { status: 201 })
+    } catch {
+        return NextResponse.json({ error: "Internal error" }, { status: 500 })
     }
 }
