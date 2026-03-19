@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -28,7 +28,8 @@ const mockQuestion = {
 }
 
 export default function QuizSessionPage() {
-    const params = useParams()
+    const params = useParams<{ id: string }>()
+    const sessionId = params.id
     const [selectedChoice, setSelectedChoice] = useState<string | null>(null)
     const [isAnswered, setIsAnswered] = useState(false)
     const [isFlagged, setIsFlagged] = useState(false)
@@ -66,6 +67,7 @@ export default function QuizSessionPage() {
                         <span className="text-slate-200">{question.subtopic}</span>
                     </div>
                     <div className="flex items-center space-x-4">
+                        <span className="hidden sm:inline text-sm text-slate-400">Session: {sessionId}</span>
                         <span className="text-sm font-medium bg-slate-800 px-3 py-1 rounded-md">
                             QID: {question.qid}
                         </span>
