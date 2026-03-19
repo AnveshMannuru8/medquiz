@@ -61,19 +61,20 @@ model VerificationToken {
 }
 
 model Question {
-  id           String    @id @default(cuid())
-  step         String             // STEP1 | STEP2CK | STEP3
-  subject      String             // e.g. Cardiology
-  system       String             // e.g. Cardiovascular
-  difficulty   String             // EASY | MEDIUM | HARD
-  questionText String
-  choices      String             // JSON string: [{id, text, isCorrect}]
-  explanation  String
-  imageUrl     String?
-  tags         String             // JSON string array
-  isActive     Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  answers      QuizAnswer[]
+  id                  String   @id @default(cuid())
+  qid                 String   @unique // Auto-generated (e.g., QID-1001)
+  subject             String   // e.g., Pathology
+  topic               String   // e.g., Cardiovascular
+  subtopic            String   // e.g., Ischemic Heart Disease
+  difficulty          String   // EASY | MEDIUM | HARD
+  questionText        String   @db.Text
+  questionImageUrl    String?  // Image for the question
+  choices             Json     // [{id: string, text: string, isCorrect: boolean}]
+  explanationText     String   @db.Text
+  explanationImageUrl String?  // Image for the explanation
+  isActive            Boolean  @default(true)
+  createdAt           DateTime @default(now())
+  answers             QuizAnswer[]
 }
 
 model QuizSession {
@@ -102,16 +103,25 @@ model QuizAnswer {
   question      Question     @relation(fields:[questionId], references:[id])
 }
 
+model Plan {
+  id            String   @id @default(cuid())
+  name          String   // e.g., "1 Month", "6 Months"
+  price         Float    // e.g., 49.99
+  stripePriceId String?  
+  features      String[] 
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
 model Subscription {
   id                   String   @id @default(cuid())
   userId               String   @unique
   stripeCustomerId     String   @unique
   stripeSubscriptionId String?  @unique
-  plan                 String   // MONTHLY | SIX_MONTH | ANNUAL | COMBO
-  status               String   // ACTIVE | TRIALING | PAST_DUE | CANCELED
+  status               String   // ACTIVE, PAST_DUE, CANCELED
   currentPeriodEnd     DateTime
-  cancelAtPeriodEnd    Boolean  @default(false)
-  user                 User     @relation(fields:[userId],references:[id])
+  user                 User     @relation(fields: [userId], references: [id])
 }
 
 model Flashcard {

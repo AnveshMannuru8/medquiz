@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server"
-import { PrismaClient } from "@prisma/client"
-import bcrypt from "bcrypt"
-
-const prisma = new PrismaClient()
+import bcrypt from "bcryptjs"
+import { adminDb } from "@/lib/firebase-admin"
 
 export async function POST(req: Request) {
     try {
@@ -12,27 +10,28 @@ export async function POST(req: Request) {
             return new NextResponse("Missing fields", { status: 400 })
         }
 
-        const exist = await prisma.user.findUnique({
-            where: {
-                email
-            }
-        })
+        const usersRef = adminDb.collection("users");
+        const snapshot = await usersRef.where("email", "==", email).get();
 
-        if (exist) {
+        if (!snapshot.empty) {
             return new NextResponse("Email already exists", { status: 400 })
         }
 
         const hashedPassword = await bcrypt.hash(password, 10)
 
-        const user = await prisma.user.create({
-            data: {
-                name,
-                email,
-                passwordHash: hashedPassword
-            }
-        })
+        const newUserRef = usersRef.doc();
+        const userData = {
+            name,
+            email,
+            passwordHash: hashedPassword,
+            role: "USER",
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+        };
 
-        return NextResponse.json(user)
+        await newUserRef.set(userData);
+
+        return NextResponse.json({ id: newUserRef.id, email, name })
     } catch (error) {
         console.error("REGISTRATION_ERROR", error)
         return new NextResponse("Internal Error", { status: 500 })

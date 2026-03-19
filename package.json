@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@auth/firebase-adapter": "^2.11.1",
     "@auth/prisma-adapter": "^2.11.1",
     "@hookform/resolvers": "^5.2.2",
     "@prisma/client": "^5.22.0",
@@ -20,10 +21,11 @@
     "@stripe/stripe-js": "^8.10.0",
     "@upstash/redis": "^1.37.0",
     "ai": "^6.0.116",
-    "bcrypt": "^6.0.0",
     "bcryptjs": "^3.0.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "firebase": "^12.10.0",
+    "firebase-admin": "^13.7.0",
     "lucide-react": "^0.577.0",
     "next": "14.2.35",
     "next-auth": "^5.0.0-beta.30",
@@ -44,7 +46,6 @@
   },
   "devDependencies": {
     "@testing-library/react": "^16.3.2",
-    "@types/bcrypt": "^6.0.0",
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20.19.37",
     "@types/react": "^18",

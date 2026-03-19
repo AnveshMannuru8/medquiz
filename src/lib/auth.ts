@@ -1,11 +1,8 @@
 import NextAuth from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
 import GoogleProvider from "next-auth/providers/google"
-import { PrismaAdapter } from "@auth/prisma-adapter"
-import { PrismaClient } from "@prisma/client"
-import bcrypt from "bcrypt"
-
-const prisma = new PrismaClient()
+import bcrypt from "bcryptjs"
+import { adminDb } from "./firebase-admin"
 
 declare module "next-auth" {
     interface User {
@@ -22,11 +19,11 @@ declare module "next-auth" {
 import { DefaultSession } from "next-auth"
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
-    adapter: PrismaAdapter(prisma),
     session: {
         strategy: "jwt",
         maxAge: 30 * 24 * 60 * 60, // 30 days
     },
+    trustHost: true,
     pages: {
         signIn: "/login",
     },
@@ -46,11 +43,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                     return null
                 }
 
-                const user = await prisma.user.findUnique({
-                    where: {
-                        email: credentials.email as string
-                    }
-                })
+                const usersRef = adminDb.collection("users");
+                const snapshot = await usersRef.where("email", "==", credentials.email).get();
+
+                if (snapshot.empty) {
+                    return null
+                }
+
+                const userDoc = snapshot.docs[0];
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const user = { id: userDoc.id, ...userDoc.data() } as any;
 
                 if (!user || !user.passwordHash) {
                     return null
